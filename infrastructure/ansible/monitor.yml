@@ -1,0 +1,36 @@
+---
+- name: Configure Nagios Monitoring Server
+  hosts: monitor
+  become: yes
+
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+
+    - name: Install Nagios and plugins
+      apt:
+        name:
+          - nagios4
+          - nagios4-cgi
+          - nagios-plugins
+        state: present
+
+    - name: Deploy website monitoring configuration
+      copy:
+        src: ../../monitoring/nagios/website.cfg
+        dest: /etc/nagios4/conf.d/website.cfg
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Validate Nagios configuration
+      command: nagios4 -v /etc/nagios4/nagios.cfg
+      register: nagios_validation
+      changed_when: false
+
+    - name: Ensure Nagios is running
+      service:
+        name: nagios4
+        state: restarted
+        enabled: yes
