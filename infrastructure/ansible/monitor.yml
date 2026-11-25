@@ -3,6 +3,9 @@
   hosts: monitor
   become: yes
 
+  vars:
+    nagios_admin_email: "devisingh876415@gmail.com"
+
   tasks:
     - name: Update apt cache
       apt:
@@ -24,6 +27,13 @@
         group: root
         mode: '0644'
 
+    - name: Configure Nagios administrator email
+      lineinfile:
+        path: /etc/nagios4/objects/contacts.cfg
+        regexp: '^\s*email\s+'
+        line: "    email                    {{ nagios_admin_email }}"
+      notify: Restart Nagios
+
     - name: Validate Nagios configuration
       command: nagios4 -v /etc/nagios4/nagios.cfg
       register: nagios_validation
@@ -34,3 +44,9 @@
         name: nagios4
         state: restarted
         enabled: yes
+
+  handlers:
+    - name: Restart Nagios
+      service:
+        name: nagios4
+        state: restarted
